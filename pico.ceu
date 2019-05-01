@@ -28,6 +28,16 @@ data VAnchor.Top;
 data VAnchor.Center;
 data VAnchor.Bottom;
 
+data Flip;
+data Flip.None;
+data Flip.Horizontal;
+data Flip.Vertical;
+data Flip.Both;
+
+data DrawMode;
+data DrawMode.Fill;
+data DrawMode.Line;
+
 data Color with
     var integer r;
     var integer g;
@@ -64,23 +74,26 @@ input (int,int,int)      MOUSE_CLICK;
 input (int,int,int)      MOUSE_UNCLICK;
 input (int,int)          MOUSE_MOVE;
 
-//output (&int,&int)       GRAPHICS_GET_BMP_DIMENSIONS;
-output (HAnchor,VAnchor)      GRAPHICS_SET_ANCHOR;
-output (int?,int?)            GRAPHICS_SET_BMP_FRAME;
-output (int?,int?)            GRAPHICS_SET_BMP_SIZE;
-output (Color)                GRAPHICS_SET_COLOR_NAME;
-output (int,int,int)          GRAPHICS_SET_COLOR_RGB;
-output (text,int)             GRAPHICS_SET_FONT;
-output (real,real)            GRAPHICS_SET_SCALE;
-output (int,int)              GRAPHICS_SET_WRITE_CURSOR;
-output (int,int,text)         GRAPHICS_DRAW_BMP;
-output (int,int)              GRAPHICS_DRAW_PIXEL;
-output (int,int,int,int)      GRAPHICS_DRAW_LINE;
-output (int,int,int,int)      GRAPHICS_DRAW_RECT;
-output (int,int,text)         GRAPHICS_DRAW_TEXT;
-output (text)                 GRAPHICS_WRITE;
-output (text)                 GRAPHICS_WRITELN;
-output (text)                 GRAPHICS_SCREENSHOT;
+//output (&int,&int)        GRAPHICS_GET_BMP_DIMENSIONS;
+output (HAnchor,VAnchor)    GRAPHICS_SET_ANCHOR;
+output (int?,int?)          GRAPHICS_SET_BMP_FRAME;
+output (int?,int?)          GRAPHICS_SET_BMP_SIZE;
+output (Color)              GRAPHICS_SET_COLOR_NAME;
+output (int,int,int)        GRAPHICS_SET_COLOR_RGB;
+output (DrawMode)           GRAPHICS_SET_DRAW_MODE;
+output (Flip)               GRAPHICS_SET_FLIP;
+output (text,int)           GRAPHICS_SET_FONT;
+output (real?)              GRAPHICS_SET_ROTATION;
+output (real,real)          GRAPHICS_SET_SCALE;
+output (int,int)            GRAPHICS_SET_WRITE_CURSOR;
+output (int,int,text)       GRAPHICS_DRAW_BMP;
+output (int,int)            GRAPHICS_DRAW_PIXEL;
+output (int,int,int,int)    GRAPHICS_DRAW_LINE;
+output (int,int,int,int)    GRAPHICS_DRAW_RECT;
+output (int,int,text)       GRAPHICS_DRAW_TEXT;
+output (text)               GRAPHICS_WRITE;
+output (text)               GRAPHICS_WRITELN;
+output (text)               GRAPHICS_SCREENSHOT;
 
 output (int)             SOUND_SET_VOLUME;
 output (text)            SOUND_PLAY;
@@ -111,7 +124,10 @@ native/pre do
     ##define ceu_callback_output_GRAPHICS_SET_BMP_SIZE(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_BMP_SIZE(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_COLOR_RGB(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGB(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_COLOR_NAME(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME(ps,trace)
+    ##define ceu_callback_output_GRAPHICS_SET_DRAW_MODE(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_DRAW_MODE(ps,trace)
+    ##define ceu_callback_output_GRAPHICS_SET_FLIP(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_FLIP(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_FONT(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_FONT(ps,trace)
+    ##define ceu_callback_output_GRAPHICS_SET_ROTATION(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_ROTATION(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_SCALE(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_SCALE(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_WRITE_CURSOR(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_WRITE_CURSOR(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SCREENSHOT(ps,trace) ceu_pico_callback_output_GRAPHICS_SCREENSHOT(ps,trace)
@@ -141,8 +157,11 @@ native/pre do
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGB (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME (void* ps, tceu_trace trace);
+    int ceu_pico_callback_output_GRAPHICS_SET_DRAW_MODE (void* ps, tceu_trace trace);
+    int ceu_pico_callback_output_GRAPHICS_SET_FLIP (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_FONT (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_FONT (void* ps, tceu_trace trace);
+    int ceu_pico_callback_output_GRAPHICS_SET_ROTATION (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_SCALE (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_WRITE_CURSOR (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SCREENSHOT (void* ps, tceu_trace trace);
@@ -179,6 +198,18 @@ native/pos do
     static tceu_data_VAnchor VANCHOR_BOTTOM = { ._enum=CEU_DATA_VAnchor__dot__Bottom };
     tceu_data_HAnchor GRAPHICS_SET_ANCHOR_X;
     tceu_data_VAnchor GRAPHICS_SET_ANCHOR_Y;
+
+    static tceu_data_DrawMode DRAW_MODE_FILL     = { ._enum=CEU_DATA_DrawMode__dot__Fill   };
+    static tceu_data_DrawMode DRAW_MODE_LINE     = { ._enum=CEU_DATA_DrawMode__dot__Line };
+    tceu_data_DrawMode GRAPHICS_DRAW_MODE_SET;
+
+    static tceu_data_Flip FLIP_NONE       = { ._enum=CEU_DATA_Flip__dot__None       };
+    static tceu_data_Flip FLIP_HORIZONTAL = { ._enum=CEU_DATA_Flip__dot__Horizontal };
+    static tceu_data_Flip FLIP_VERTICAL   = { ._enum=CEU_DATA_Flip__dot__Vertical   };
+    static tceu_data_Flip FLIP_BOTH       = { ._enum=CEU_DATA_Flip__dot__Both       };
+    tceu_data_Flip GRAPHICS_FLIP_SET;
+
+    real GRAPHICS_SET_BMP_ANGLE = 0.0;
 
     bool GRAPHICS_SET_BMP_FRAME = 0;
     int GRAPHICS_SET_BMP_FRAME_N=0, GRAPHICS_SET_BMP_FRAME_DIV=1;
@@ -245,6 +276,19 @@ native/pos do
                 return y - h/2;
             case CEU_DATA_VAnchor__dot__Bottom:
                 return y - h + 1;
+        }
+    }
+
+    SDL_RendererFlip GRAPHICS_FLIP (){
+        switch (GRAPHICS_FLIP_SET._enum){
+            case CEU_DATA_Flip__dot__Both:
+                return SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL;
+            case CEU_DATA_Flip__dot__Horizontal:
+                return SDL_FLIP_HORIZONTAL;
+            case CEU_DATA_Flip__dot__Vertical:
+                return SDL_FLIP_VERTICAL;
+            default:
+                return SDL_FLIP_NONE;
         }
     }
 
@@ -389,6 +433,19 @@ native/pos do
         return 0;
     }
 
+    int ceu_pico_callback_output_GRAPHICS_SET_DRAW_MODE (void* ps, tceu_trace trace) {
+        tceu_output_GRAPHICS_SET_DRAW_MODE* ps_ = (tceu_output_GRAPHICS_SET_DRAW_MODE*) ps;
+        GRAPHICS_DRAW_MODE_SET = ps_->_1;
+        return 0;
+    }
+
+    int ceu_pico_callback_output_GRAPHICS_SET_FLIP (void* ps, tceu_trace trace) {
+        tceu_output_GRAPHICS_SET_FLIP* ps_ = (tceu_output_GRAPHICS_SET_FLIP*) ps;
+        GRAPHICS_FLIP_SET = ps_->_1;
+        return 0;
+    }
+
+
     int ceu_pico_callback_output_GRAPHICS_SET_FONT (void* ps, tceu_trace trace) {
         tceu_output_GRAPHICS_SET_FONT* fnt = (tceu_output_GRAPHICS_SET_FONT*) ps;
         FNT_H = fnt->_2;
@@ -401,6 +458,12 @@ native/pos do
             snprintf(msg, 255, "file not found: \"%s\"", fnt->_1);
             ceu_assert_ex(0, msg, trace);
         }
+        return 0;
+    }
+
+    int ceu_pico_callback_output_GRAPHICS_SET_ROTATION (void* ps, tceu_trace trace) {
+        tceu_output_GRAPHICS_SET_ROTATION* ps_ = (tceu_output_GRAPHICS_SET_ROTATION*) ps;
+        GRAPHICS_SET_BMP_ANGLE = ps_->_1.value;
         return 0;
     }
 
@@ -440,7 +503,8 @@ native/pos do
         SDL_SetRenderTarget(REN, dst_tex);
 
         // TODO: linux requires flipping (why?)
-        SDL_RenderCopy(REN, src_tex, NULL, NULL);
+        //SDL_RenderCopy(REN, src_tex, NULL, NULL);
+        SDL_RenderCopyEx(REN, src_tex, NULL, NULL, GRAPHICS_SET_BMP_ANGLE, NULL, GRAPHICS_FLIP());
         //SDL_RenderCopyEx(REN, src_tex, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
 
         SDL_DestroyTexture(src_tex);
@@ -475,6 +539,17 @@ native/pos do
 //SDL_GetWindowSize(REN, &win_w, &win_h);
 //SDL_RenderGetLogicalSize(REN, &log_w, &log_h);
 //SDL_RenderSetScale(REN, 10,10);
+        SDL_RendererFlip flip = GRAPHICS_FLIP();
+        if (flip == SDL_FLIP_HORIZONTAL){
+            int tmp = ps_->_1;
+            ps_->_1 = ps_->_3;
+            ps_->_3 = tmp;
+        }
+        if (flip == SDL_FLIP_VERTICAL){
+            int tmp = ps_->_2;
+            ps_->_2 = ps_->_4;
+            ps_->_4 = tmp;
+        }
         SDL_RenderDrawLine(REN, X(ps_->_1), Y(ps_->_2), X(ps_->_3), Y(ps_->_4));
 //SDL_RenderSetScale(REN, 1, 1);
         WINDOW_Present();
@@ -492,8 +567,13 @@ native/pos do
         // ANCHOR
         rct.x = GRAPHICS_ANCHOR_X(X(ps_->_1),rct.w);
         rct.y = GRAPHICS_ANCHOR_Y(Y(ps_->_2),rct.h);
+        
+        if ( GRAPHICS_DRAW_MODE_SET._enum == CEU_DATA_DrawMode__dot__Fill ) {
+            SDL_RenderFillRect(REN, &rct);
+        } else if ( GRAPHICS_DRAW_MODE_SET._enum == CEU_DATA_DrawMode__dot__Line ) {
+            SDL_RenderDrawRect(REN, &rct);
+        }
 
-        SDL_RenderFillRect(REN, &rct);
         WINDOW_Present();
         return 0;
     }
@@ -542,7 +622,10 @@ native/pos do
         rct.x = GRAPHICS_ANCHOR_X(X(ps_->_1),rct.w);
         rct.y = GRAPHICS_ANCHOR_Y(Y(ps_->_2),rct.h);
 
-        SDL_RenderCopy(REN, tex, &clip, &rct);
+        //SDL_RenderCopy(REN, tex, &clip, &rct);
+
+        SDL_SetTextureColorMod(tex, GRAPHICS_SET_CLEAR_COLOR_RGB.r, GRAPHICS_SET_CLEAR_COLOR_RGB.g, GRAPHICS_SET_CLEAR_COLOR_RGB.b);
+        SDL_RenderCopyEx(REN, tex, &clip, &rct, GRAPHICS_SET_BMP_ANGLE, NULL, GRAPHICS_FLIP());
         WINDOW_Present();
 
         SDL_DestroyTexture(tex);
@@ -571,7 +654,8 @@ native/pos do
         rct.x = GRAPHICS_ANCHOR_X(X(ps_->_1),rct.w);
         rct.y = GRAPHICS_ANCHOR_Y(Y(ps_->_2),rct.h);
 
-        SDL_RenderCopy(REN, tex, NULL, &rct);
+        //SDL_RenderCopy(REN, tex, NULL, &rct);
+        SDL_RenderCopyEx(REN, tex, NULL, &rct, GRAPHICS_SET_BMP_ANGLE, NULL, GRAPHICS_FLIP());
         WINDOW_Present();
 
         SDL_DestroyTexture(tex);
@@ -593,7 +677,8 @@ native/pos do
         int w, h;
         TTF_SizeText(FNT, *str, &w,&h);
         SDL_Rect rct = { X(GRAPHICS_CUR_WRITE_CURSOR_X),Y(GRAPHICS_CUR_WRITE_CURSOR_Y), w,h };
-        SDL_RenderCopy(REN, tex, NULL, &rct);
+        //SDL_RenderCopy(REN, tex, NULL, &rct);
+        SDL_RenderCopyEx(REN, tex, NULL, &rct, GRAPHICS_SET_BMP_ANGLE, NULL, GRAPHICS_FLIP());
         WINDOW_Present();
 
         GRAPHICS_CUR_WRITE_CURSOR_X += w;
@@ -681,6 +766,14 @@ end
 #define VANCHOR_CENTER ({VANCHOR_CENTER} as VAnchor)
 #define VANCHOR_BOTTOM ({VANCHOR_BOTTOM} as VAnchor)
 
+#define DRAW_MODE_LINE       ({DRAW_MODE_LINE}        as DrawMode)
+#define DRAW_MODE_FILL       ({DRAW_MODE_FILL}        as DrawMode)
+
+#define FLIP_NONE       ({FLIP_NONE}        as Flip)
+#define FLIP_BOTH       ({FLIP_BOTH}        as Flip)
+#define FLIP_HORIZONTAL ({FLIP_HORIZONTAL}  as Flip)
+#define FLIP_VERTICAL   ({FLIP_VERTICAL}    as Flip)
+
 var&? SDL_Init sdl = spawn SDL_Init("pico-Ceu", WIN_DIM,WIN_DIM, _);
 watching sdl do
     {
@@ -722,6 +815,7 @@ watching sdl do
     //{SDL_SetWindowResizable(WIN, SDL_FALSE);}
 
     emit GRAPHICS_SET_ANCHOR(HANCHOR_CENTER, VANCHOR_CENTER);
+    emit GRAPHICS_SET_DRAW_MODE(DRAW_MODE_LINE);
     emit GRAPHICS_SET_COLOR_RGB(0xFF,0xFF,0xFF);
     emit GRAPHICS_SET_FONT("res/tiny.ttf", WIN_DIM/50);
     do finalize with
