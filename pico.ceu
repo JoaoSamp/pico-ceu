@@ -38,10 +38,17 @@ data DrawMode;
 data DrawMode.Fill;
 data DrawMode.Line;
 
+data BlendMode;
+data BlendMode.None;
+data BlendMode.Blend;
+data BlendMode.Add;
+data BlendMode.Mod;
+
 data Color with
     var integer r;
     var integer g;
     var integer b;
+    var integer a;
 end
 
 data Point with
@@ -76,10 +83,13 @@ input (int,int)          MOUSE_MOVE;
 
 //output (&int,&int)        GRAPHICS_GET_BMP_DIMENSIONS;
 output (HAnchor,VAnchor)    GRAPHICS_SET_ANCHOR;
+output (BlendMode)          GRAPHICS_SET_BLEND_MODE;
 output (int?,int?)          GRAPHICS_SET_BMP_FRAME;
 output (int?,int?)          GRAPHICS_SET_BMP_SIZE;
+output (int)                GRAPHICS_SET_COLOR_ALPHA;
 output (Color)              GRAPHICS_SET_COLOR_NAME;
 output (int,int,int)        GRAPHICS_SET_COLOR_RGB;
+output (int,int,int,int)    GRAPHICS_SET_COLOR_RGBA;
 output (DrawMode)           GRAPHICS_SET_DRAW_MODE;
 output (Flip)               GRAPHICS_SET_FLIP;
 output (text,int)           GRAPHICS_SET_FONT;
@@ -120,9 +130,12 @@ native/pre do
     ##define ceu_callback_output_WINDOW_CLEAR(ps,trace) ceu_pico_callback_output_WINDOW_CLEAR(ps,trace)
     ##define ceu_callback_output_FRAMES_SET(ps,trace) ceu_pico_callback_output_FRAMES_SET(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_ANCHOR(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_ANCHOR(ps,trace)
+    ##define ceu_callback_output_GRAPHICS_SET_BLEND_MODE(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_BLEND_MODE(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_BMP_FRAME(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_BMP_FRAME(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_BMP_SIZE(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_BMP_SIZE(ps,trace)
+    ##define ceu_callback_output_GRAPHICS_SET_COLOR_ALPHA(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_COLOR_ALPHA(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_COLOR_RGB(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGB(ps,trace)
+    ##define ceu_callback_output_GRAPHICS_SET_COLOR_RGBA(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGBA(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_COLOR_NAME(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_DRAW_MODE(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_DRAW_MODE(ps,trace)
     ##define ceu_callback_output_GRAPHICS_SET_FLIP(ps,trace) ceu_pico_callback_output_GRAPHICS_SET_FLIP(ps,trace)
@@ -151,10 +164,13 @@ native/pre do
     int ceu_pico_callback_output_WINDOW_CLEAR (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_WINDOW_CLEAR (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_ANCHOR (void* ps, tceu_trace trace);
+    int ceu_pico_callback_output_GRAPHICS_SET_BLEND_MODE (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_BMP_FRAME (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_BMP_SIZE (void* ps, tceu_trace trace);
+    int ceu_pico_callback_output_GRAPHICS_SET_COLOR_ALPHA (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGB (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGB (void* ps, tceu_trace trace);
+    int ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGBA (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME (void* ps, tceu_trace trace);
     int ceu_pico_callback_output_GRAPHICS_SET_DRAW_MODE (void* ps, tceu_trace trace);
@@ -202,6 +218,12 @@ native/pos do
     static tceu_data_DrawMode DRAW_MODE_FILL     = { ._enum=CEU_DATA_DrawMode__dot__Fill   };
     static tceu_data_DrawMode DRAW_MODE_LINE     = { ._enum=CEU_DATA_DrawMode__dot__Line };
     tceu_data_DrawMode GRAPHICS_DRAW_MODE_SET;
+
+    static tceu_data_BlendMode BLEND_MODE_NONE    = { ._enum=CEU_DATA_BlendMode__dot__None   };
+    static tceu_data_BlendMode BLEND_MODE_BLEND   = { ._enum=CEU_DATA_BlendMode__dot__Blend   };
+    static tceu_data_BlendMode BLEND_MODE_ADD     = { ._enum=CEU_DATA_BlendMode__dot__Add   };
+    static tceu_data_BlendMode BLEND_MODE_MOD     = { ._enum=CEU_DATA_BlendMode__dot__Mod   };
+    tceu_data_BlendMode GRAPHICS_BLEND_MODE_SET;
 
     static tceu_data_Flip FLIP_NONE       = { ._enum=CEU_DATA_Flip__dot__None       };
     static tceu_data_Flip FLIP_HORIZONTAL = { ._enum=CEU_DATA_Flip__dot__Horizontal };
@@ -386,10 +408,32 @@ native/pos do
         return 0;
     }
 
+    int ceu_pico_callback_output_GRAPHICS_SET_COLOR_ALPHA (void* ps, tceu_trace trace) {
+        tceu_output_GRAPHICS_SET_COLOR_ALPHA* ps_ = (tceu_output_GRAPHICS_SET_COLOR_ALPHA*) ps;
+        SDL_SetRenderDrawColor(REN, GRAPHICS_SET_CLEAR_COLOR_RGB.r, GRAPHICS_SET_CLEAR_COLOR_RGB.g, GRAPHICS_SET_CLEAR_COLOR_RGB.b, ps_->_1);
+        return 0;
+    }
+
     int ceu_pico_callback_output_GRAPHICS_SET_ANCHOR (void* ps, tceu_trace trace) {
         tceu_output_GRAPHICS_SET_ANCHOR* ps_ = (tceu_output_GRAPHICS_SET_ANCHOR*) ps;
         GRAPHICS_SET_ANCHOR_X = ps_->_1;
         GRAPHICS_SET_ANCHOR_Y = ps_->_2;
+        return 0;
+    }
+
+    int ceu_pico_callback_output_GRAPHICS_SET_BLEND_MODE (void* ps, tceu_trace trace) {
+        tceu_output_GRAPHICS_SET_BLEND_MODE* ps_ = (tceu_output_GRAPHICS_SET_BLEND_MODE*) ps;
+        GRAPHICS_BLEND_MODE_SET = ps_->_1;
+        switch (GRAPHICS_BLEND_MODE_SET._enum){
+            case CEU_DATA_BlendMode__dot__Blend:
+                return SDL_SetRenderDrawBlendMode(REN, SDL_BLENDMODE_BLEND);
+            case CEU_DATA_BlendMode__dot__Add:
+                return SDL_SetRenderDrawBlendMode(REN, SDL_BLENDMODE_ADD);
+            case CEU_DATA_BlendMode__dot__Mod:
+                return SDL_SetRenderDrawBlendMode(REN, SDL_BLENDMODE_MOD);
+            default:
+                return SDL_SetRenderDrawBlendMode(REN, SDL_BLENDMODE_NONE);
+        }
         return 0;
     }
 
@@ -423,13 +467,23 @@ native/pos do
         return 0;
     }
 
+    int ceu_pico_callback_output_GRAPHICS_SET_COLOR_RGBA (void* ps, tceu_trace trace) {
+        tceu_output_GRAPHICS_SET_COLOR_RGBA* clr = (tceu_output_GRAPHICS_SET_COLOR_RGBA*) ps;
+        GRAPHICS_SET_CLEAR_COLOR_RGB.r = clr->_1;
+        GRAPHICS_SET_CLEAR_COLOR_RGB.g = clr->_2;
+        GRAPHICS_SET_CLEAR_COLOR_RGB.b = clr->_3;
+        GRAPHICS_SET_CLEAR_COLOR_RGB.a = clr->_4;
+        SDL_SetRenderDrawColor(REN, clr->_1, clr->_2, clr->_3, clr->_4);
+        return 0;
+    }
+
     int ceu_pico_callback_output_GRAPHICS_SET_COLOR_NAME (void* ps, tceu_trace trace) {
         tceu_data_Color* clr = (tceu_data_Color*) ps;
         GRAPHICS_SET_CLEAR_COLOR_RGB.r = clr->r;
         GRAPHICS_SET_CLEAR_COLOR_RGB.g = clr->g;
         GRAPHICS_SET_CLEAR_COLOR_RGB.b = clr->b;
-        GRAPHICS_SET_CLEAR_COLOR_RGB.a = 0xFF;
-        SDL_SetRenderDrawColor(REN, clr->r, clr->g, clr->b, 0xFF);
+        GRAPHICS_SET_CLEAR_COLOR_RGB.a = clr->a;
+        SDL_SetRenderDrawColor(REN, clr->r, clr->g, clr->b, clr->a);
         return 0;
     }
 
@@ -625,6 +679,7 @@ native/pos do
         //SDL_RenderCopy(REN, tex, &clip, &rct);
 
         SDL_SetTextureColorMod(tex, GRAPHICS_SET_CLEAR_COLOR_RGB.r, GRAPHICS_SET_CLEAR_COLOR_RGB.g, GRAPHICS_SET_CLEAR_COLOR_RGB.b);
+        SDL_SetTextureAlphaMod(tex, GRAPHICS_SET_CLEAR_COLOR_RGB.a);
         SDL_RenderCopyEx(REN, tex, &clip, &rct, GRAPHICS_SET_BMP_ANGLE, NULL, GRAPHICS_FLIP());
         WINDOW_Present();
 
@@ -769,6 +824,11 @@ end
 #define DRAW_MODE_LINE       ({DRAW_MODE_LINE}        as DrawMode)
 #define DRAW_MODE_FILL       ({DRAW_MODE_FILL}        as DrawMode)
 
+#define BLEND_MODE_NONE      ({BLEND_MODE_NONE}        as BlendMode)
+#define BLEND_MODE_BLEND     ({BLEND_MODE_BLEND}        as BlendMode)
+#define BLEND_MODE_ADD       ({BLEND_MODE_ADD}        as BlendMode)
+#define BLEND_MODE_MOD       ({BLEND_MODE_MOD}        as BlendMode)
+
 #define FLIP_NONE       ({FLIP_NONE}        as Flip)
 #define FLIP_BOTH       ({FLIP_BOTH}        as Flip)
 #define FLIP_HORIZONTAL ({FLIP_HORIZONTAL}  as Flip)
@@ -870,7 +930,9 @@ watching sdl do
             pool[] SDL_KeyDown keys;
             var _SDL_KeyboardEvent&& key;
             every key in SDL_KEYDOWN do
-                spawn SDL_KeyDown(key:keysym.sym) in keys;
+                if key:repeat == 0 then
+                    spawn SDL_KeyDown(key:keysym.sym) in keys;
+                end
             end
         with
             // RELEASE -> UNPRESS
@@ -882,7 +944,9 @@ watching sdl do
             pool[] SDL_KeyUp keys;
             var _SDL_KeyboardEvent&& key;
             every key in SDL_KEYUP do
-                spawn SDL_KeyUp(key:keysym.sym) in keys;
+                if key:repeat == 0 then
+                    spawn SDL_KeyUp(key:keysym.sym) in keys;
+                end
             end
         end
     with

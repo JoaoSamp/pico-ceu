@@ -34,9 +34,10 @@ all:
 	    --env --env-types=$(CEU_DIR)/env/types.h                            \
 	          --env-threads=$(CEU_DIR)/env/threads.h                        \
 	          --env-main=$(CEU_DIR)/env/main.c								\
+		    --env-output=../main.c	\
 	    --cc --cc-args="$(CC_ARGS) -g -lm -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_ttf -lSDL2_net -lSDL2_gfx" \
-	         --cc-output="$(dir $(CEU_SRC))/$(OUT_SUB)/tmp.exe"
+	         --cc-output="$(dir $(CEU_SRC))/$(OUT_SUB)/../../tmp.exe"
 	mkdir -p $(dir $(CEU_SRC))/res/
 	cp tiny.ttf $(dir $(CEU_SRC))/res/
-	cd "$(dir $(CEU_SRC))/$(OUT_SUB)/" && ./tmp.exe
+	cd "$(dir $(CEU_SRC))/$(OUT_SUB)/" && ./../../tmp.exe
 
